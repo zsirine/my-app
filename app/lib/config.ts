@@ -3,7 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 const API_URL_KEY = 'apiUrl';
 
 // IP par défaut (si rien n'est configuré)
-const DEFAULT_API_URL = '';
+const DEFAULT_API_URL = 'https://buzz-curable-glass.ngrok-free.dev';
 
 // Sauvegarder l’IP
 export const saveApiUrl = async (url: string) => {

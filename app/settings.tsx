@@ -20,28 +20,31 @@ export default function SettingsScreen() {
   }, []);
 
   const handleSave = async () => {
-    try {
-      if (!apiUrl.trim()) {
-        Alert.alert('Erreur', "L'adresse API ne peut pas être vide.");
-        return;
-      }
-      if (
-  !apiUrl.startsWith('http://') &&
-  !apiUrl.startsWith('https://')
-) {
-  Alert.alert(
-    'Attention',
-    "L'adresse doit commencer par http:// ou https://"
-  );
-  return;
-}
-        
-      await saveApiUrl(apiUrl.trim());
-      Alert.alert('Succès', 'Configuration mise à jour.');
-    } catch {
-      Alert.alert('Erreur', "Impossible de sauvegarder.");
+  try {
+    const cleanUrl = apiUrl.trim();
+
+    if (!cleanUrl) {
+      Alert.alert('Erreur', "L'adresse API ne peut pas être vide.");
+      return;
     }
-  };
+
+    if (
+      !cleanUrl.startsWith('http://') && 
+      !cleanUrl.startsWith('https://')
+    ) {
+      Alert.alert(
+        'Attention', 
+        "L'adresse doit commencer par http:// ou https://"
+      );
+      return;
+    }
+
+    await saveApiUrl(cleanUrl);
+    Alert.alert('Succès', 'Configuration mise à jour.');
+  } catch (error) {
+    Alert.alert('Erreur', 'Impossible de sauvegarder.');
+  }
+};
 
 
   const handleLogout = async () => {
@@ -68,7 +71,7 @@ export default function SettingsScreen() {
             style={styles.input}
             value={apiUrl}
             onChangeText={setApiUrl}
-            placeholder="https://192.168.5.17:8000"
+            placeholder="https://buzz-curable-glass.ngrok-free.dev"
             placeholderTextColor="#6b7280"
             autoCapitalize="none"
           />
