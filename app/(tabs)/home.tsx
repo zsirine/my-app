@@ -1,16 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { executePost } from '../lib/API';
-import { getToken } from '../lib/auth';
-import { getApiUrl } from '../lib/config';
+import { getApiUrl, executePost } from '../lib/API';
 import { router } from 'expo-router/build/exports';
+import { deleteToken, getToken } from '../lib/auth';
 
 export default function HomeScreen() {
   const [robotStatus, setRobotStatus] = useState('Vérification...');
   const [loading, setLoading] = useState(false);
   
-  // États pour le Tri
   const [triModalVisible, setTriModalVisible] = useState(false);
   const [zone, setZone] = useState('A');
   const [forme, setForme] = useState('tous'); 
@@ -18,17 +16,17 @@ export default function HomeScreen() {
 
   const fetchStatus = async () => {
   try {
-    const url = await getApiUrl();
     const token = await getToken();
-
-    const res = await fetch(`${url}/robot/status`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
-
+  const apiUrl = await getApiUrl();
+  const res = await fetch(`${apiUrl}/robot/status`, {
+  headers: token ? {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  } : {},
+});  
     if (!res.ok) {
       throw new Error(`Erreur HTTP: ${res.status}`);
     }
-
     const data = await res.json();
     console.log('STATUS API:', data);
 
@@ -61,13 +59,16 @@ export default function HomeScreen() {
       if (res.ok) Alert.alert('Succès', `${name} lancé avec succès.`);
       else {
         const errData = await res.json();
-        console.log(errData); // Pour débugger la 422
+        console.log(errData); 
         Alert.alert('Erreur', `Code ${res.status}: Vérifiez les paramètres.`);
       }
     } catch { Alert.alert('Erreur', 'Serveur injoignable'); }
     finally { setLoading(false); }
   };
-
+  const handleLogout = async () => {
+  await deleteToken();
+  router.replace('/');
+};
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.container}>
@@ -77,6 +78,9 @@ export default function HomeScreen() {
           <Text style={styles.statusLabel}>Statut du système :</Text>
           <Text style={styles.statusValue}>{robotStatus}</Text>
         </View>
+        <TouchableOpacity onPress={fetchStatus}>
+          <Text style={{color: '#3b82f6'}}> Actualiser</Text>
+        </TouchableOpacity>
 
         <View style={styles.grid}>
           <TouchableOpacity style={styles.bigBtn} onPress={() => setTriModalVisible(true)}>
@@ -91,16 +95,28 @@ export default function HomeScreen() {
             <Text style={styles.btnLabel}>RANGEMENT</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.bigBtn, styles.emergencyBtn]} onPress={() => handleAction('ARRÊT', () => executePost('/robot/stop', { action: 'EMERGENCY_STOP' }))}>
-            <Text style={styles.btnLabel}>ARRÊT URGENCE</Text>
-          </TouchableOpacity>
-          {/* BOUTON POUR ALLER À LA PAGE DE CONTRÔLE */}
         <TouchableOpacity 
           style={[styles.bigBtn, { backgroundColor: '#4b5563', marginTop: 10 }]} 
           onPress={() => router.push('/controle')}
         >
           <Text style={styles.btnLabel}> CONTRÔLE MANUEL</Text>
         </TouchableOpacity>
+        <TouchableOpacity 
+  style={styles.logoutBtn}
+  onPress={() => {
+    Alert.alert(
+      "Déconnexion",
+      "Êtes-vous sûr de vouloir vous déconnecter ?",
+      [
+        { text: "Annuler", style: "cancel" },
+        { text: "Se déconnecter", style: "destructive", onPress: handleLogout }
+      ]
+    );
+  }}
+>
+  <Text style={styles.logoutText}>SE DÉCONNECTER</Text>
+</TouchableOpacity>
+
         </View>
       </ScrollView>
 
@@ -195,15 +211,15 @@ const styles = StyleSheet.create({
   btnTextBold: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
   cancelText: { textAlign: 'center', marginTop: 15, color: '#ef4444' },
   controlButton: {
-    backgroundColor: '#4b5563', // Un gris bleuté élégant
+    backgroundColor: '#4b5563',
     width: '100%',
     padding: 20,
     borderRadius: 20,
     marginTop: 15,
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 4, // Petit effet d'ombre sur Android
-    shadowColor: '#000', // Ombre sur iOS
+    elevation: 4,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
@@ -213,5 +229,19 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     letterSpacing: 1,
+  },
+  logoutBtn: {
+    marginTop: 30,
+    width: '100%',
+    padding: 18,
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: '#ef4444',
+    alignItems: 'center',
+  },
+  logoutText: {
+    color: '#ef4444',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });

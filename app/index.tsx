@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 
 import { saveToken } from './lib/auth';
-import { getApiUrl } from './lib/config';
+import { getApiUrl } from './lib/API';
 
 export default function LoginScreen() {
   const [username, setUsername] = useState('');
@@ -19,8 +19,8 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     try {
-      const apiUrl = await getApiUrl();
 
+      const apiUrl = await getApiUrl();
       const response = await fetch(`${apiUrl}/auth/login`, {
         method: 'POST',
         headers: {
@@ -29,7 +29,7 @@ export default function LoginScreen() {
         body: JSON.stringify({ username, password }),
       });
 
-      // 🔥 important
+      // important
       const data = await response.json();
 
       if (response.ok) {
@@ -42,7 +42,6 @@ export default function LoginScreen() {
 
         await saveToken(token);
 
-        // 👉 redirection vers ton app
         router.replace('/(tabs)/home');
       } else {
         Alert.alert("Erreur", data.detail || "Identifiants incorrects");
@@ -76,6 +75,14 @@ export default function LoginScreen() {
       <TouchableOpacity style={styles.button} onPress={handleLogin}>
         <Text style={styles.buttonText}>SE CONNECTER</Text>
       </TouchableOpacity>
+
+      <TouchableOpacity 
+  style={styles.apiBtn}
+  onPress={() => router.push('./parametre')}
+>
+  <Text style={styles.apiText}>Changer l'adresse API</Text>
+</TouchableOpacity>
+      
     </View>
   );
 }
@@ -113,4 +120,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
+  apiBtn: {
+  marginTop: 15,
+  alignItems: 'center',
+  padding: 12,
+},
+apiText: {
+  color: '#3b82f6',
+  fontSize: 14,
+},
 });

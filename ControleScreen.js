@@ -2,10 +2,8 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 
 export default function ControlScreen() {
-  // Cette fonction sera prête pour quand Mamadou aura son API
   const sendCommand = async (action) => {
     console.log("Action demandée : " + action);
-    // Simulation d'alerte pour vérifier que ton bouton marche
     alert("Commande " + action + " envoyée au serveur !");
   };
 

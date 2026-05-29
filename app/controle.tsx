@@ -1,6 +1,7 @@
-import React from 'react';
-import {
+import React, { useState } from 'react';
+import{
   Alert,
+  Modal,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,30 +11,27 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
-// Import ajusté selon ton arborescence
 import { executePost } from './lib/API'; 
 
 export default function ControlScreen() {
   const router = useRouter();
+  const [convModalVisible, setConvModalVisible] = useState(false);
+  const [speed, setSpeed] = useState(50);
+  const [direction, setDirection] = useState(1);
 
-  const handleAction = async (
-    name: string,
-    func: () => Promise<Response>
-  ) => {
-    try {
-      const res = await func();
-
-      if (res.ok) {
-        Alert.alert('Succès', `${name} exécuté`);
-      } else {
-        const errData = await res.json().catch(() => ({}));
-        console.log("Erreur API:", errData);
-        Alert.alert('Erreur', `Impossible de lancer ${name}`);
-      }
-    } catch (e) {
-      Alert.alert('Erreur', 'Serveur injoignable');
+  const handleAction = async (name: string, func: () => Promise<Response>) => {
+  try {
+    const res = await func();
+    if (res.ok) {
+      Alert.alert('Succès', `${name} exécuté`);
+    } else {
+      Alert.alert('Erreur', `Impossible de lancer ${name}`);
     }
-  };
+  } catch (e) {
+    Alert.alert('Erreur', 'Serveur injoignable');
+  }
+};
+    
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -66,19 +64,65 @@ export default function ControlScreen() {
           <Text style={styles.buttonText}>STOP ROBOT</Text>
         </TouchableOpacity>
 
+<Text style={styles.section}>Convoyeur</Text>
         {/* SECTION CONVOYEUR */}
-        <Text style={styles.section}>Convoyeur</Text>
-
         <TouchableOpacity
-          style={styles.buttonBlue}
-          onPress={() =>
-            handleAction('START CONVOYEUR', () =>
-              executePost('/conveyor/start')
-            )
-          }
+  style={styles.buttonBlue}
+  onPress={() => setConvModalVisible(true)}
+>
+  <Text style={styles.buttonText}>START CONVOYEUR</Text>
+</TouchableOpacity>
+
+{/* MODAL CONVOYEUR */}
+<Modal visible={convModalVisible} transparent animationType="slide">
+  <View style={styles.modalContainer}>
+    <Text style={styles.modalTitle}>Paramètres Convoyeur</Text>
+
+    <Text style={styles.modalLabel}>Vitesse</Text>
+    <View style={styles.modalRow}>
+      {[30, 50, 100].map(v => (
+        <TouchableOpacity
+          key={v}
+          style={[styles.modalBtn, speed === v && styles.modalBtnActive]}
+          onPress={() => setSpeed(v)}
         >
-          <Text style={styles.buttonText}>START CONVOYEUR</Text>
+          <Text style={styles.modalBtnText}>{v}</Text>
         </TouchableOpacity>
+      ))}
+    </View>
+
+    <Text style={styles.modalLabel}>Direction</Text>
+    <View style={styles.modalRow}>
+      <TouchableOpacity
+        style={[styles.modalBtn, direction === 1 && styles.modalBtnActive]}
+        onPress={() => setDirection(1)}
+      >
+        <Text style={styles.modalBtnText}>AVANT</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.modalBtn, direction === -1 && styles.modalBtnActive]}
+        onPress={() => setDirection(-1)}
+      >
+        <Text style={styles.modalBtnText}>ARRIÈRE</Text>
+      </TouchableOpacity>
+    </View>
+
+    <TouchableOpacity style={styles.modalLancer}
+      onPress={() => {
+        setConvModalVisible(false);
+        handleAction('START CONVOYEUR', () =>
+          executePost('/conveyor/start', { speed, direction })
+        );
+      }}
+    >
+      <Text style={styles.buttonText}>LANCER</Text>
+    </TouchableOpacity>
+
+    <TouchableOpacity onPress={() => setConvModalVisible(false)}>
+      <Text style={styles.annuler}>Annuler</Text>
+    </TouchableOpacity>
+  </View>
+</Modal>
 
         <TouchableOpacity
           style={styles.buttonBlueDark}
@@ -203,4 +247,38 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
   },
+  modalContainer: {
+  flex: 1, justifyContent: 'flex-end',
+  backgroundColor: 'rgba(0,0,0,0.5)',
+},
+modalTitle: {
+  color: '#fff', fontSize: 22, fontWeight: 'bold',
+  marginBottom: 20, textAlign: 'center',
+},
+modalLabel: {
+  color: '#3b82f6', fontSize: 16,
+  marginBottom: 10, fontWeight: 'bold',
+},
+modalRow: {
+  flexDirection: 'row', gap: 10, marginBottom: 20,
+},
+modalBtn: {
+  padding: 12, borderRadius: 8,
+  borderWidth: 1, borderColor: '#3b82f6',
+},
+modalBtnActive: {
+  backgroundColor: '#3b82f6',
+},
+modalBtnText: {
+  color: '#fff', fontWeight: 'bold',
+},
+modalLancer: {
+  backgroundColor: '#22c55e',
+  padding: 15, borderRadius: 10,
+  alignItems: 'center', marginBottom: 10,
+},
+annuler: {
+  color: '#ef4444', textAlign: 'center',
+  marginTop: 10, fontSize: 14,
+},
 });
